@@ -38,7 +38,7 @@ module tt_um_example (
   end
 
   //tri-state output
-  assig uo_out = output_enable ? count : 8'bz
+  assign uo_out = output_enable ? count : 8'bz;
 
   // All output pins must be assigned. If not used, assign to 0.
   assign uio_out = 0;
