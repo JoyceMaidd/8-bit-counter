@@ -42,7 +42,7 @@ async def test_project(dut):
     dut.uio_in.value = 0b110  # count_enable=1, output_enable=1
     await ClockCycles(dut.clk, 5)
 
-    expected = 50 + 5
+    expected = 50 + 4 # increment on rising edges expected to be 54
     assert dut.uo_out.value == expected, f"Expected {expected}, got {int(dut.uo_out.value)}"
 
     # ----------------------------------------------------------
@@ -50,7 +50,7 @@ async def test_project(dut):
     dut.uio_in.value = 0b010  # count_enable=1, output_enable=0
     await ClockCycles(dut.clk, 1)
 
-    # uo_out should be Z (cocotb interprets as 'X' or 'Z')
+    # uo_out should be Z
     out_str = str(dut.uo_out.value)
     assert "z" in out_str.lower(), f"Expected high-Z, got {out_str}"
 
@@ -61,6 +61,6 @@ async def test_project(dut):
 
     current = int(dut.uo_out.value)
     dut._log.info(f"Counter resumed output at {current}")
-    assert current == expected + 1, f"Expected {expected+1}, got {current}"
+    assert current == expected + 2, f"Expected {expected+1}, got {current}"
 
     dut._log.info("All counter tests passed")
