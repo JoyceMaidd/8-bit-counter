@@ -25,16 +25,42 @@ async def test_project(dut):
 
     dut._log.info("Test project behavior")
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
-
-    # Wait for one clock cycle to see the output values
+    # ----------------------------------------------------------
+    # Test 1: Load value 50 into counter
+    dut.ui_in.value = 50
+    dut.uio_in.value = 0b101  # load=1, output_enable=1
     await ClockCycles(dut.clk, 1)
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+    # release load
+    dut.uio_in.value = 0b100  # only output_enable=1
+    await ClockCycles(dut.clk, 1)
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+    assert dut.uo_out.value == 50, f"Expected 50, got {int(dut.uo_out.value)}"
+
+    # ----------------------------------------------------------
+    # Test 2: Enable counting for 5 cycles
+    dut.uio_in.value = 0b110  # count_enable=1, output_enable=1
+    await ClockCycles(dut.clk, 5)
+
+    expected = 50 + 5
+    assert dut.uo_out.value == expected, f"Expected {expected}, got {int(dut.uo_out.value)}"
+
+    # ----------------------------------------------------------
+    # Test 3: Disable output
+    dut.uio_in.value = 0b010  # count_enable=1, output_enable=0
+    await ClockCycles(dut.clk, 1)
+
+    # uo_out should be Z (cocotb interprets as 'X' or 'Z')
+    out_str = str(dut.uo_out.value)
+    assert "z" in out_str.lower(), f"Expected high-Z, got {out_str}"
+
+    # ----------------------------------------------------------
+    # Test 4: Re-enable output, should show the correct count
+    dut.uio_in.value = 0b110  # count_enable=1, output_enable=1
+    await ClockCycles(dut.clk, 1)
+
+    current = int(dut.uo_out.value)
+    dut._log.info(f"Counter resumed output at {current}")
+    assert current == expected + 1, f"Expected {expected+1}, got {current}"
+
+    dut._log.info("All counter tests passed")
